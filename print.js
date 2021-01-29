@@ -3,7 +3,7 @@ const axios = require('axios');
 const { exec } = require('child_process');
 escpos.Network = require('escpos-network');
 const nodeHtmlToImage = require('node-html-to-image');
-const fs = require('fs').promises;
+const fs = require('fs');
 const { uid = null } = require('./uid.json');
 let interval = null;
 
@@ -105,6 +105,8 @@ const findPrinter = async () => {
 function print(ip, imagePath) {
     return new Promise((resolve, reject) => {
       const device = new escpos.Network(ip);
+
+      console.log(imagePath);
   
       escpos.Image.load(imagePath, function (image) {
         device.open((error) => {
@@ -133,18 +135,25 @@ function print(ip, imagePath) {
 
 async function printBon({id, html = '', ip = '', times = 1 }) {
     try {
+
+      
   
       let output = __dirname + `/${id}.png`;
           
       await nodeHtmlToImage({
-        output: `./${id}.png`,
+        output,
         html,
+	content: {},
         puppeteerArgs: {
           headless: true,
-          executablePath: '/usr/bin/chromium-browser',
+	  executablePath: '/usr/bin/chromium-browser',
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         }
       });
+
+      //let image = await fs.promises.readFile(output)
+
+      //console.log(image);
   
       let promises = Array.from(Array(times), () => print(ip, output));
 
@@ -203,9 +212,9 @@ async function getId(){
         
         try {
           const { data } = await axios.get(url);
-          await fs.writeFile('uid.json', JSON.stringify({ uid: data.id }));
+          await fs.promises.writeFile('uid.json', JSON.stringify({ uid: data.id }));
         } catch (error) {
-          await fs.writeFile('uid.json', JSON.stringify({ uid: null }));
+          await fs.promises.writeFile('uid.json', JSON.stringify({ uid: null }));
         }
         
     } 
